@@ -13,7 +13,7 @@
                 </button>
 
                 <button class="btn btn-resp">
-                  <img src="../assets/img/search.png">
+                  <img src="../assets/img/search-resp.png">
                 </button>
 
                 <button class="btn" @click="setMenu()">
@@ -23,7 +23,7 @@
             </div>
 
             <div id="menu-box" :class="display">
-              <div class="mt-4 ml-5 d-flex" id="profile">
+              <div class="mt-4 ml-5 d-flex" id="profile" v-b-toggle.sidebar>
                 <div>
                   <img src="../assets/img/settings.png">
                 </div>
@@ -88,11 +88,11 @@
                   <div v-if="item.email !== senderData" @click="selectUser(item,index)">
                     <div class="row no-gutters mt-1" id="fill">
                       <div class="col-2 user-image">
-                        <img src="../assets/img/user.png"/>
+                        <img :src="`http://localhost:4000/${item.image}`" id="img-list">
                       </div>
 
                       <div class="col-7 text-left pl-4">
-                        <p class="m-0 pt-2" id="user-name">{{item.username}}</p>
+                        <p class="m-0 pt-2" id="user-name">{{item.name}}</p>
                         <p id="user-msg">Why did you do that?</p>
                       </div>
 
@@ -110,23 +110,25 @@
           </div>
         </div>
 
-        <div class="col-md-9" id="chat-msg" v-if="userReceiver !== ''">
+        <!-- chat -->
+        <div class="col-md-9" id="chat-msg" v-if="open" ref="hidden">
           <div class="row">
-            <div class="col-md-12 bg-white" id="top-bar">
-              <div class="row no-gutters">
-                <div class="col-1" id="img-wrapper">
-                  <img src="../assets/img/user5.png" id="user-picture">
-                </div>
+            <div class="col-md-12 bg-white d-flex flex-row justify-content-start align-items-center" id="top-bar">
+              <div>
+                <img src="../assets/img/back.png" class="d-block d-sm-none m-2 pr-2" @click="close" style="cursor: pointer;">
+              </div>
+              <div id="img-wrapper">
+                <img :src="`http://localhost:4000/${images}`" id="user-picture">
+              </div>
 
-                <div class="col-10 text-left" id="namesta">
-                  <p id="name">{{userReceiver}}</p>
-                  <p id="status">Online</p>
-                </div>
+              <div class="text-left" id="namesta">
+                <p id="name">{{userReceiver}}</p>
+                <p id="status">Online</p>
+              </div>
 
-                <div class="col-1" id="menu">
-                  <div id="profile-menu">
-                    <img src="../assets/img/profile-menu.png">
-                  </div>
+              <div id="menu-side">
+                <div id="profile-menu">
+                  <img src="../assets/img/profile-menu.png">
                 </div>
               </div>
             </div>
@@ -139,7 +141,21 @@
               </div>
 
               <div v-else>
-                <p class="text-right chat-txt-to ml-auto">{{item.message}}</p>
+                <div class="text-right chat-txt-to ml-auto d-flex">
+                  <div>
+                    <b-dropdown variant="outline" menu-class="dropmenu" no-caret>
+                      <template v-slot:button-content>
+                        <img src="../assets/img/back.png" width="80%" id="btn-menu-delete"/>
+                      </template>
+
+                      <b-dropdown-item-button class="mt-2 mb-2" @click="deleteMsg(item.id)">
+                        Delete Message
+                      </b-dropdown-item-button>
+                    </b-dropdown>
+                  </div>
+
+                  <p>{{item.message}}</p>
+                </div>
               </div>
             </div>
 
@@ -158,9 +174,9 @@
             <div class="col-md-9 bg-white" id="type-msg">
               <form @submit.prevent="sendMessage()">
                 <input type="text" v-model="message" class="form-control" placeholder="Type your message..." id="type-msg-box">
-                  <i class="img-type" id="plus"><img src="../assets/img/plus.png"></i>
-                  <i class="img-type" id="bald"><img src="../assets/img/bald.png"></i>
-                  <i class="img-type" id="rect"><img src="../assets/img/rect.png"></i>
+                <i class="img-type" id="plus"><img src="../assets/img/plus.png"></i>
+                <i class="img-type" id="bald"><img src="../assets/img/bald.png"></i>
+                <i class="img-type" id="rect"><img src="../assets/img/rect.png"></i>
               </form>
             </div>
           </div>
@@ -171,6 +187,7 @@
             <p>Please select a chat to start messaging</p>
           </div>
         </div>
+        <Profile/>
       </div>
     </div>
   </div>
@@ -180,8 +197,12 @@
 import io from 'socket.io-client'
 import { mapActions } from 'vuex'
 import { URL } from '../helpers/env'
+import Profile from '../components/Profile'
 
 export default {
+  components: {
+    Profile
+  },
   data () {
     return {
       // username: this.$route.query.username,
@@ -196,15 +217,19 @@ export default {
       display: 'hidden',
       menu: false,
       userReceiver: '',
-      historyMessages: []
+      historyMessages: [],
+      images: null,
+      open: false
     }
   },
   methods: {
     selectUser (receiver) {
+      this.open = true
       this.chatRoom = []
       this.charPrivates = []
-      this.userReceiver = receiver.username
+      this.userReceiver = receiver.name
       this.dataReceiver = receiver.email
+      this.images = receiver.image
       this.setChatPrivate()
       this.socket.emit('get-history-message', {
         sender: this.senderData,
@@ -252,7 +277,6 @@ export default {
     },
     logout () {
       this.onLogout().then((response) => {
-        alert(response)
         window.location = '/login'
       })
     },
@@ -264,8 +288,12 @@ export default {
         this.display = 'show'
       }
     },
-    getDetail (username) {
-      alert(username)
+    close () {
+      this.open = false
+    },
+    deleteMsg (id) {
+      this.socket.emit('delete-message', id)
+      window.location = '/home'
     }
   },
   mounted () {
@@ -281,13 +309,23 @@ export default {
       if (this.dataReceiver !== null) {
         this.setChatPrivate()
       }
-      // this.listMessages = [...this.listMessages, data]
     })
   }
 }
 </script>
 
 <style scoped>
+#btn-menu-delete {
+  transform: rotate(270deg);
+  vertical-align: top;
+}
+
+#img-list {
+  width: 55px;
+  height: 55px;
+  border-radius: 20px;
+}
+
 #profile {
   cursor: pointer;
 }
@@ -382,10 +420,12 @@ export default {
 #user-picture {
   width: 55px;
   height: 55px;
+  border-radius: 20px;
 }
 
 #namesta {
   padding-top: 18px;
+  padding-left: 20px;
 }
 
 #name {
@@ -403,7 +443,7 @@ export default {
   margin: 0;
   top: 50%;
   position: absolute;
-  padding-left: 50px;
+  right: 30px;
   color: #848484;
   -ms-transform: translate(-50%, -50%);
   transform: translate(-50%, -50%);
@@ -570,6 +610,15 @@ export default {
 
     #center-group {
       display: none;
+    }
+
+    #msg-default {
+      display: none;
+    }
+
+    #chat-msg {
+      position: absolute;
+      height: 100vh;
     }
 }
 </style>

@@ -10,7 +10,7 @@
 
             <div class="input-group">
                 <label for="name-input">Name</label>
-                <input type="text" id="name-input" v-model="form.username" autocomplete="off" required lang="en">
+                <input type="text" id="name-input" v-model="form.name" autocomplete="off" required lang="en">
             </div>
 
             <div class="input-group">
@@ -40,12 +40,13 @@
 
 <script>
 import { mapActions } from 'vuex'
+import Swal from 'sweetalert2'
 
 export default {
   data () {
     return {
       form: {
-        username: '',
+        name: '',
         email: '',
         password: ''
       }
@@ -57,15 +58,22 @@ export default {
         if (response === 'Register success') {
           window.location = '/login'
         } else {
-          alert(response)
+          this.alertExist()
         }
       }).catch((err) => {
-        alert(err)
+        console.log(err)
       })
     },
     ...mapActions({
       actionRegister: 'auth/register'
-    })
+    }),
+    alertExist () {
+      Swal.fire({
+        icon: 'error',
+        title: 'Email Already Exist',
+        text: 'Please change your email for register'
+      })
+    }
   }
 }
 </script>

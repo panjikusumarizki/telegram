@@ -41,7 +41,7 @@
 
 <script>
 import { mapActions } from 'vuex'
-// import axios from 'axios'
+import Swal from 'sweetalert2'
 
 export default {
   data () {
@@ -59,30 +59,29 @@ export default {
     onLogin () {
       this.actionLogin(this.form).then((response) => {
         if (response === 'Login successful') {
-        //   this.$router.push({ path: '/home', query: { username: results.data.username } })
           window.location = '/home'
-        } else {
-          alert(response)
+        } else if (response === 'Email is not registered, please register!') {
+          this.alertRegistered()
+        } else if (response === 'Password is wrong!') {
+          this.alertWrongPassword()
         }
       }).catch((err) => {
         alert(err)
       })
-      //   axios.post('http://localhost:4000/users/login', {
-      //     email: this.email,
-      //     password: this.password
-      //   }).then((result) => {
-      //     const status = result.data.status
-
-    //     if (status === 500) {
-    //       alert(result.message)
-    //     } else {
-    //       const results = result.data.data
-    //       localStorage.setItem('token', results.token)
-    //       this.$router.push({ path: '/home', query: { username: results.username } })
-    //     }
-    //   }).catch((err) => {
-    //     console.log(err.message)
-    //   })
+    },
+    alertRegistered () {
+      Swal.fire({
+        icon: 'error',
+        title: 'Registered Your Email',
+        text: 'Email is not registered, please register!'
+      })
+    },
+    alertWrongPassword () {
+      Swal.fire({
+        icon: 'error',
+        title: 'Password Is Wrong',
+        text: 'Please check your password'
+      })
     }
   }
 }

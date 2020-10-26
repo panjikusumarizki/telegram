@@ -24,10 +24,11 @@ const actions = {
         // console.log(response.data.data)
         localStorage.setItem('token', response.data.data.token)
         localStorage.setItem('email', response.data.data.email)
+        // localStorage.setItem('image', response.data.data.image)
+        localStorage.setItem('id', response.data.data.id)
         resolve(response.data.message)
-      }).catch(() => {
-        // eslint-disable-next-line prefer-promise-reject-errors
-        reject('Email or Password wrong')
+      }).catch((err) => {
+        reject(err.message)
       })
     })
   },
@@ -44,6 +45,8 @@ const actions = {
     return new Promise((resolve) => {
       localStorage.removeItem('token')
       localStorage.removeItem('email')
+      localStorage.removeItem('image')
+      localStorage.removeItem('id')
       resolve('Logout success')
     })
   }
